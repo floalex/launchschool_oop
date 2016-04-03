@@ -1,9 +1,10 @@
 class Player
-  attr_accessor :move, :name
+  attr_accessor :move, :name, :score
   
   def initialize
     @move = nil
     set_name
+    @score = 0
   end
 end
 
@@ -90,6 +91,7 @@ end
 
 # Game Orchestration Engine
 class RPSGame
+  WINNING_CONDITION = 3
   attr_accessor :human, :computer
   
   def initialize
@@ -99,7 +101,9 @@ class RPSGame
   
   def display_welcome_message
     puts "Welcome to Rock, Paper, Scissors! #{human.name}"
+    puts "First player to #{WINNING_CONDITION} points wins this game!"
     puts "Your competitor is #{computer.name}"
+    puts "Press crtl + c to exit any time you want"
   end
   
   def display_goodbye_message
@@ -114,10 +118,27 @@ class RPSGame
   def display_winner
     if human.move > computer.move
       puts "#{human.name} won!"
+      human.score += 1
+      puts "#{human.name} earned 1 point!"
     elsif human.move < computer.move
       puts "#{computer.name} won!"
+      computer.score += 1
+      puts "#{computer.name} earned 1 point!"
     else
       puts "It's a tie!"
+    end
+  end
+  
+  def display_score
+    puts "#{human.name} has score: #{human.score}"
+    puts "#{computer.name} has score: #{computer.score}"
+  end
+  
+  def winning_score
+    if human.score == WINNING_CONDITION
+      puts "#{human.name} has #{WINNING_CONDITION} points now! #{human.name} won!"
+    elsif computer.score == WINNING_CONDITION
+      puts "#{computer.name} has #{WINNING_CONDITION} points now! #{computer.name} won!"
     end
   end
   
@@ -137,11 +158,17 @@ class RPSGame
   def play
     display_welcome_message
     loop do
-      human.choose
-      computer.choose
-      display_moves
-      display_winner
+      while human.score < WINNING_CONDITION && computer.score < WINNING_CONDITION
+        human.choose
+        computer.choose
+        display_moves
+        display_winner
+        display_score
+      end
+      winning_score
       break unless play_again?
+      human.score = 0
+      computer.score = 0
     end
     display_goodbye_message
   end
