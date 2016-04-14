@@ -1,5 +1,6 @@
-
 class Board
+  attr_reader :squares
+  
   WINNING_LINES = [[1, 2, 3], [4, 5, 6], [7, 8, 9]] +
                   [[1, 4, 7], [2, 5, 8], [3, 6, 9]] +
                   [[1, 5, 9], [3, 5, 7]]
@@ -9,6 +10,7 @@ class Board
     reset
   end
 
+  # rubocop:disable Metrics/AbcSize
   def draw
     puts "     |     |"
     puts "  #{@squares[1]}  |  #{@squares[2]}  |  #{@squares[3]}"
@@ -22,6 +24,7 @@ class Board
     puts "  #{@squares[7]}  |  #{@squares[8]}  |  #{@squares[9]}"
     puts "     |     |"
   end
+  # rubocop:disable Metrics/AbcSize
   
   def []=(key, marker)
     @squares[key].marker = marker
@@ -154,8 +157,13 @@ class TTTGame
     display_board
   end
   
+  def joinor(arr, delimiter, word="or")
+    arr[-1] = "#{word} #{arr.last}" if arr.size > 1
+    arr.join(delimiter)
+  end
+  
   def human_moves
-    puts "Choose a sqaure (#{board.unmarked_keys.join(', ')}): "
+    puts "Choose a sqaure (#{joinor(board.unmarked_keys, ', ')}): "
     square = nil
     loop do
       square = gets.chomp.to_i
@@ -166,8 +174,38 @@ class TTTGame
     board[square] = human.marker
   end
   
+  #computer attack/defense AI
+  def find_at_risk_square(line, place)
+    positions = board.squares.values_at(*line).collect(&:marker)
+    if positions.count(place) == 2
+      board.squares.select { |k, v| line.include?(k) && v.marker == Square::INITIAL_MARKER }.keys.first
+    else
+      nil
+    end
+  end
+  
   def computer_moves
-    board[board.unmarked_keys.sample] = computer.marker
+    square = nil
+    
+    # attack first
+    Board::WINNING_LINES.each do |line|
+      square = find_at_risk_square(line, COMPUTER_MARKER)
+      break if square
+    end
+    
+    if !square
+      # defense
+      Board::WINNING_LINES.each do |line|
+        square = find_at_risk_square(line, HUMAN_MARKER)
+        break if square
+      end
+    end
+    
+    if !square
+      square = board.unmarked_keys.sample
+    end
+    
+    board[square] = computer.marker
   end
   
   def human_turn?
