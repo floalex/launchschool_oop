@@ -92,16 +92,18 @@ end
 
 class Player
   attr_reader :marker
+  attr_accessor :score
   
   def initialize(marker)
     @marker = marker
+    @score = 0
   end
 end
 
 class TTTGame
   HUMAN_MARKER = "X"
   COMPUTER_MARKER = "O"
-  FIRST_TO_MOVE = [HUMAN_MARKER, COMPUTER_MARKER].sample
+  WINNING_POINTS = 5
   
   attr_reader :board, :human, :computer
   
@@ -109,7 +111,7 @@ class TTTGame
     @board = Board.new
     @human = Player.new(HUMAN_MARKER)
     @computer = Player.new(COMPUTER_MARKER)
-    @current_marker = FIRST_TO_MOVE
+    @current_marker = random_mark
   end
   
   def play
@@ -119,15 +121,24 @@ class TTTGame
     loop do
       display_board
       
-      loop do
-        current_player_moves
-        break if board.someone_won? || board.full?
+      while human.score < WINNING_POINTS && computer.score < WINNING_POINTS
+        puts "#{@current_marker} goes first."
+        
+        loop do
+          current_player_moves
+          break if board.someone_won? || board.full?
+          clear_screen_and_display_board if human_turn?
+        end
+        
+        display_result
+        display_current_score
+        reset
         clear_screen_and_display_board if human_turn?
       end
       
-      display_result
+      display_winning_message
       break unless play_again?
-      reset
+      reset_score
       display_again_message
     end
     
@@ -139,10 +150,15 @@ class TTTGame
   def display_welcome_message
     puts "Welcome to the Tic Tac Toe game!"
     puts ""
+    puts "First player to #{WINNING_POINTS} points wins this game."
   end
   
   def display_goodbye_message
     puts "Thanks for playing Tic Tac Toe game, goodbye!"
+  end
+  
+  def random_mark
+    [HUMAN_MARKER, COMPUTER_MARKER].sample
   end
   
   def display_board
@@ -228,11 +244,25 @@ class TTTGame
     case board.winning_marker
     when human.marker
       puts "You won!"
+      human.score += 1
+      puts "You get 1 point!"
     when computer.marker
       puts "Computer won!"
+      computer.score += 1
+      puts "Computer gets 1 point!"
     else
       puts "It's a tie."
     end
+  end
+  
+  def display_current_score
+    puts "You have score #{human.score}, and computer has score #{computer.score}."
+    puts ""
+  end
+  
+  def display_winning_message
+    puts "You won!" if human.score == 5
+    puts "Computer won!" if computer.score == 5
   end
   
   def play_again?
@@ -253,8 +283,13 @@ class TTTGame
   
   def reset
     board.reset
-    @current_marker = FIRST_TO_MOVE
+    @current_marker = random_mark
     clear
+  end
+  
+  def reset_score
+    @human.score = 0
+    @computer.score = 0
   end
   
   def display_again_message
