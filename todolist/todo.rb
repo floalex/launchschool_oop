@@ -57,6 +57,10 @@ class TodoList
     todos[-1]
   end
   
+  def to_a
+    todos
+  end
+  
   def item_at(index)
     raise IndexError if index > todos.size
     todos[index]
